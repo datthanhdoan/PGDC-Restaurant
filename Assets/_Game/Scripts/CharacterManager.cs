@@ -1,13 +1,14 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 public class CharacterManager : MonoBehaviour
 {
     /// <summary>
     /// Reference to the ChairManager component.
     /// </summary>
-    [Header("[References]")]
+    [Header("References")]
     [SerializeField] private ChairManager chairManager;
 
     /// <summary>
@@ -15,6 +16,7 @@ public class CharacterManager : MonoBehaviour
     /// </summary>
     [Header("[Settings]")]
     [SerializeField] private float spawnInterval = 5f;
+    [SerializeField] private int maxCurrentCharacters = 5;
     [SerializeField] private Transform spawnPoint;
 
     /// <summary>
@@ -22,8 +24,9 @@ public class CharacterManager : MonoBehaviour
     /// </summary>
     [Header("[Pool Settings]")]
     [SerializeField] private Character characterPrefab;
-    [SerializeField] private int maxCharacters = 5;
     [SerializeField] private int initialPoolSize = 10;
+    [SerializeField] private int maxPoolSize = 20;
+
     /// <summary>
     /// Flag to control the spawning of characters.
     /// </summary>
@@ -32,8 +35,7 @@ public class CharacterManager : MonoBehaviour
 
     private List<Character> activeCharacters = new List<Character>();
     public IReadOnlyList<Character> ActiveCharacters => activeCharacters;
-
-    private GenericObjectPooler<Character> characterPool;
+    private ObjectPool<Character> characterPool;
 
     private void Awake()
     {
@@ -42,31 +44,17 @@ public class CharacterManager : MonoBehaviour
 
     private void InitializePool()
     {
-        characterPool = new GenericObjectPooler<Character>(
-            characterPrefab,
+        characterPool = new ObjectPool<Character>(
+            () => Instantiate(characterPrefab, transform),
+            character => character.gameObject.SetActive(true),
+            character => character.gameObject.SetActive(false),
+            character => Destroy(character.gameObject),
+            false,
             initialPoolSize,
-            transform,
-            OnCreateCharacter,
-            OnGetCharacter,
-            OnReleaseCharacter
+            maxPoolSize
         );
     }
 
-    private void OnCreateCharacter(Character character)
-    {
-        // Initialization logic for newly created characters
-    }
-
-    private void OnGetCharacter(Character character)
-    {
-        character.gameObject.SetActive(true);
-    }
-
-    private void OnReleaseCharacter(Character character)
-    {
-        character.gameObject.SetActive(false);
-        character.ResetForPooling();
-    }
 
     private void Start()
     {
@@ -87,7 +75,7 @@ public class CharacterManager : MonoBehaviour
 
     private bool CanSpawnCharacter()
     {
-        return activeCharacters.Count < maxCharacters && chairManager.HasEmptyChair();
+        return activeCharacters.Count < maxCurrentCharacters && chairManager.HasEmptyChair();
     }
 
     private IEnumerator SpawnCharacter()
@@ -122,6 +110,7 @@ public class CharacterManager : MonoBehaviour
     {
         character.CurrentChair.ChangeStatus(Chair.SlotStatus.Empty);
         activeCharacters.Remove(character);
+        character.ResetForPooling();
         characterPool.Release(character);
     }
 
