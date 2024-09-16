@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 380793722}
   - component: {fileID: 380793723}
   m_Layer: 0
-  m_Name: CharacterManager + Spawner
+  m_Name: CharacterManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -174,10 +174,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chairManager: {fileID: 1847395433}
   spawnInterval: 5
+  maxCurrentCharacters: 5
   spawnPoint: {fileID: 576099090}
   characterPrefab: {fileID: 7726755925830195710, guid: 136513be0e7f455499c824f9e23517c8, type: 3}
-  maxCharacters: 5
   initialPoolSize: 10
+  maxPoolSize: 20
   isSpawning: 1
 --- !u!1 &519420028
 GameObject:
