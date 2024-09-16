@@ -43,6 +43,12 @@ public class Character : MonoBehaviour
             switch (State)
             {
                 case CharacterState.MovingToChair:
+                    if (currentChair == null)
+                    {
+                        Debug.LogError("Character is moving to a chair but the chair is null");
+                        yield break;
+                    }
+                    currentChair.ChangeStatus(Chair.SlotStatus.Occupied);
                     yield return StartCoroutine(MoveToPosition(currentChair.transform.position));
                     State = CharacterState.JumpingToChair;
                     break;
@@ -55,6 +61,7 @@ public class Character : MonoBehaviour
                     State = CharacterState.MovingToExit;
                     break;
                 case CharacterState.MovingToExit:
+                    currentChair.ChangeStatus(Chair.SlotStatus.Empty);
                     yield return StartCoroutine(MoveToExit());
                     State = CharacterState.Exited;
                     break;

@@ -173,8 +173,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chairManager: {fileID: 1847395433}
-  spawnInterval: 5
-  maxCurrentCharacters: 5
+  spawnInterval: 0.1
+  maxCurrentCharacters: 1
   spawnPoint: {fileID: 576099090}
   characterPrefab: {fileID: 7726755925830195710, guid: 136513be0e7f455499c824f9e23517c8, type: 3}
   initialPoolSize: 10

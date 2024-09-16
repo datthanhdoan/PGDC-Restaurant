@@ -98,8 +98,6 @@ public class CharacterManager : MonoBehaviour
         character.transform.position = spawnPoint.position;
         character.Initialize(emptyChair, spawnPoint.position, this);
 
-        chairManager.SetChairStatus(emptyChair, Chair.SlotStatus.Occupied);
-
         AddCharacter(character);
         character.StartJourney();
 
