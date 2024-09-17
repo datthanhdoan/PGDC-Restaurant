@@ -1,7 +1,14 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
-public class Character : MonoBehaviour
+
+public interface IServable
+{
+    void Serve(bool hasServedFood);
+}
+
+public class Character : MonoBehaviour, IServable
+
 {
     private NavMeshAgent agent;
     private Chair currentChair;
@@ -10,7 +17,9 @@ public class Character : MonoBehaviour
 
     public Chair CurrentChair => currentChair;
 
+    private bool hasServedFood = false;
     [SerializeField] private float foodServingWaitTime = 5f;
+    [SerializeField] private float timeToEat = 2f;
 
     public CharacterState State { get; private set; }
 
@@ -36,6 +45,11 @@ public class Character : MonoBehaviour
         StartCoroutine(RunStateMachine());
     }
 
+    public void Serve(bool hasServedFood)
+    {
+        this.hasServedFood = hasServedFood;
+    }
+
     private IEnumerator RunStateMachine()
     {
         while (State != CharacterState.Exited)
@@ -52,14 +66,30 @@ public class Character : MonoBehaviour
                     yield return StartCoroutine(MoveToPosition(currentChair.transform.position));
                     State = CharacterState.JumpingToChair;
                     break;
-                case CharacterState.JumpingToChair:
-                    yield return StartCoroutine(JumpToChair());
-                    State = CharacterState.Eating;
+                // ----------------------------------------------------------------
+                case CharacterState.WaitforFood:
+                    float waitTime = 0f;
+                    while (!hasServedFood && waitTime < foodServingWaitTime)
+                    {
+                        yield return null;
+                        waitTime += Time.deltaTime;
+                    }
+
+                    if (hasServedFood)
+                    {
+                        State = CharacterState.Eating;
+                    }
+                    else
+                    {
+                        State = CharacterState.MovingToExit;
+                    }
                     break;
+                // ----------------------------------------------------------------
                 case CharacterState.Eating:
                     yield return new WaitForSeconds(foodServingWaitTime);
                     State = CharacterState.MovingToExit;
                     break;
+                // ----------------------------------------------------------------
                 case CharacterState.MovingToExit:
                     currentChair.ChangeStatus(Chair.SlotStatus.Empty);
                     yield return StartCoroutine(MoveToExit());
@@ -70,6 +100,8 @@ public class Character : MonoBehaviour
 
         characterManager.RemoveCharacter(this);
     }
+
+
     private IEnumerator MoveToPosition(Vector3 targetPosition)
     {
         agent.SetDestination(targetPosition);
@@ -131,6 +163,7 @@ public enum CharacterState
 {
     MovingToChair,
     JumpingToChair,
+    WaitforFood,
     Eating,
     MovingToExit,
     Exited
