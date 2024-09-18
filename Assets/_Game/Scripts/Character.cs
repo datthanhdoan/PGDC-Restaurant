@@ -8,14 +8,13 @@ public interface IServable
 }
 
 public class Character : MonoBehaviour, IServable
-
 {
     private NavMeshAgent agent;
-    private Chair currentChair;
-    private CharacterManager characterManager;
+    private Chair _currentChair;
+    private CharacterManager _characterManager;
     private Vector3 exitPosition;
 
-    public Chair CurrentChair => currentChair;
+    public Chair CurrentChair => _currentChair;
 
     private bool hasServedFood = false;
     [SerializeField] private float foodServingWaitTime = 5f;
@@ -33,8 +32,8 @@ public class Character : MonoBehaviour, IServable
 
     public void Initialize(Chair chair, Vector3 exit, CharacterManager characterManager)
     {
-        this.characterManager = characterManager;
-        currentChair = chair;
+        this._characterManager = characterManager;
+        _currentChair = chair;
         exitPosition = exit;
         State = CharacterState.MovingToChair;
     }
@@ -57,48 +56,32 @@ public class Character : MonoBehaviour, IServable
             switch (State)
             {
                 case CharacterState.MovingToChair:
-                    if (currentChair == null)
+                    if (_currentChair == null)
                     {
                         Debug.LogError("Character is moving to a chair but the chair is null");
                         yield break;
                     }
-                    currentChair.ChangeStatus(Chair.SlotStatus.Occupied);
-                    yield return StartCoroutine(MoveToPosition(currentChair.transform.position));
-                    State = CharacterState.JumpingToChair;
+                    _currentChair.ChangeStatus(Chair.SlotStatus.Occupied);
+                    yield return StartCoroutine(MoveToPosition(_currentChair.transform.position));
+                    State = CharacterState.WaitforFood;
                     break;
-                // ----------------------------------------------------------------
                 case CharacterState.WaitforFood:
-                    float waitTime = 0f;
-                    while (!hasServedFood && waitTime < foodServingWaitTime)
-                    {
-                        yield return null;
-                        waitTime += Time.deltaTime;
-                    }
-
-                    if (hasServedFood)
-                    {
-                        State = CharacterState.Eating;
-                    }
-                    else
-                    {
-                        State = CharacterState.MovingToExit;
-                    }
+                    yield return StartCoroutine(WaitForFood());
                     break;
-                // ----------------------------------------------------------------
                 case CharacterState.Eating:
                     yield return new WaitForSeconds(foodServingWaitTime);
                     State = CharacterState.MovingToExit;
                     break;
                 // ----------------------------------------------------------------
                 case CharacterState.MovingToExit:
-                    currentChair.ChangeStatus(Chair.SlotStatus.Empty);
+                    _currentChair.ChangeStatus(Chair.SlotStatus.Empty);
                     yield return StartCoroutine(MoveToExit());
                     State = CharacterState.Exited;
                     break;
             }
         }
 
-        characterManager.RemoveCharacter(this);
+        _characterManager.RemoveCharacter(this);
     }
 
 
@@ -112,9 +95,28 @@ public class Character : MonoBehaviour, IServable
         agent.isStopped = true;
     }
 
+    private IEnumerator WaitForFood()
+    {
+        float waitTime = 0f;
+        while (!hasServedFood && waitTime < foodServingWaitTime)
+        {
+            waitTime += Time.deltaTime;
+            yield return null;
+        }
+
+        if (hasServedFood)
+        {
+            State = CharacterState.Eating;
+        }
+        else
+        {
+            State = CharacterState.MovingToExit;
+        }
+    }
+
     private IEnumerator JumpToChair()
     {
-        transform.position = currentChair.transform.position;
+        transform.position = _currentChair.transform.position;
         yield return new WaitForSeconds(0.5f); // Simulating jump animation time
     }
 
@@ -152,10 +154,10 @@ public class Character : MonoBehaviour, IServable
 
     public void ResetForPooling()
     {
-        StopAllCoroutines();
-        agent.ResetPath();
+        // agent.ResetPath();
         State = CharacterState.MovingToChair;
-        currentChair = null;
+        _currentChair = null;
+        StopAllCoroutines();
     }
 }
 

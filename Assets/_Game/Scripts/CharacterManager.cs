@@ -106,7 +106,6 @@ public class CharacterManager : MonoBehaviour
 
     public void RemoveCharacter(Character character)
     {
-        character.CurrentChair.ChangeStatus(Chair.SlotStatus.Empty);
         activeCharacters.Remove(character);
         character.ResetForPooling();
         characterPool.Release(character);
